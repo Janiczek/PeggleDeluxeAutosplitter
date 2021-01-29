@@ -15,15 +15,13 @@ state("popcapgame1")
   int levelNum : "popcapgame1.exe", 0x00250A38; // static, non-pointer: 0x650A38 - 0x400000
 
   // "Try Again" / "Level Complete" popup
-  int popupY : "popcapgame1.exe", 0x00250908, 0x4, 0x160, 0x94, 0x34; // draggable anywhere between 233..548 (top..bottom); negative when not on screen
-  string10 popupTitle : "popcapgame1.exe", 0x00250908, 0x4, 0x160, 0xA4; // Either "Try Again!" or "Level comp"(...lete)
+  string1 popupTitle : "popcapgame1.exe", 0x00250908, 0x4, 0x160, 0xA4; // Either "T"(ry Again!) or "L"(evel complete)
 }
 
 init
 {
   vars.hasToIgnoreFirstTransition = false;
-  vars.popupVisible = false;
-  vars.popupIsRetry = false;
+  vars.isRetry = false;
 }
 
 start
@@ -38,10 +36,7 @@ start
 
 split
 {
-  vars.popupVisible = current.popupY >= 0;
-  if (vars.popupVisible) {
-    vars.popupIsRetry = current.popupTitle == "Try Again!";
-  }
+  vars.isRetry = current.popupTitle == "T";
 
   if (current.levelNum != old.levelNum) {
     if (vars.hasToIgnoreFirstTransition) {
@@ -49,7 +44,7 @@ split
       print("Peggle ASL: ignored first transition (from story to level 1-1)");
       return false;
     }
-    if (vars.popupVisible && vars.popupIsRetry) {
+    if (vars.isRetry) {
       print("Peggle ASL: ignored retry");
       return false;
     }
