@@ -14,8 +14,8 @@ state("popcapgame1")
   // It's not the level number per se -- it increments even after retries, and doesn't reset between main menu transitions.
   int levelNum : "popcapgame1.exe", 0x00250A38; // static, non-pointer: 0x650A38 - 0x400000
 
-  // "Try Again" / "Level Complete" popup
-  string1 popupTitle : "popcapgame1.exe", 0x00250908, 0x4, 0x160, 0xA4; // Either "T"(ry Again!) or "L"(evel complete)
+  // Fever score: is 0 when you lose, >0 when you win (the ball always ends up in some bucket).
+  int feverScore : "popcapgame1.exe", 0x00250908, 0x4, 0x160, 0x214;
 }
 
 init
@@ -36,9 +36,14 @@ start
 
 split
 {
-  vars.isRetry = current.popupTitle == "T";
+  vars.isRetry = current.feverScore == 0;
+  if (current.feverScore != old.feverScore) {
+    print("Peggle ASL: fever score changed: " + old.feverScore + " -> " + current.feverScore);
+    print("Peggle ASL: as a result, isRetry == " + vars.isRetry);
+  }
 
   if (current.levelNum != old.levelNum) {
+    print("Peggle ASL: level num changed: " + old.levelNum + " -> " + current.levelNum);
     if (vars.hasToIgnoreFirstTransition) {
       vars.hasToIgnoreFirstTransition = false;
       print("Peggle ASL: ignored first transition (from story to level 1-1)");
