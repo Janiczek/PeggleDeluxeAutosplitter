@@ -14,13 +14,14 @@ state("popcapgame1")
   // It's not the level number per se -- it increments even after retries, and doesn't reset between main menu transitions.
   int levelNum : "popcapgame1.exe", 0x00250A38; // static, non-pointer: 0x650A38 - 0x400000
 
-  // Fever score: is 0 when you lose, >0 when you win (the ball always ends up in some bucket).
-  int feverScore : "popcapgame1.exe", 0x00250908, 0x4, 0x160, 0x214;
+  // "Try Again!" vs "Level Comp"(lete!) or "Stage Comp"(lete!)
+  string10 popupTitle : "popcapgame1.exe", 0x00288030, 0x18, 0x0, 0x8, 0x1C, 0xA0;
 }
 
 init
 {
   vars.hasToIgnoreFirstTransition = false;
+  vars.hasFinishedStage = false;
   vars.isRetry = false;
 }
 
@@ -36,10 +37,13 @@ start
 
 split
 {
-  vars.isRetry = current.feverScore == 0;
-  if (current.feverScore != old.feverScore) {
-    print("Peggle ASL: fever score changed: " + old.feverScore + " -> " + current.feverScore);
-    print("Peggle ASL: as a result, isRetry == " + vars.isRetry);
+  vars.isRetry = !vars.hasFinishedStage && current.popupTitle == "Try Again!";
+  if (current.popupTitle != old.popupTitle) {
+    print("Peggle ASL: Popup title changed: '" + old.popupTitle + "' -> '" + current.popupTitle + "'");
+    if (old.popupTitle == "Stage Comp" && current.popupTitle == "") {
+      vars.isRetry = false;
+      vars.hasFinishedStage = true;
+    }
   }
 
   if (current.levelNum != old.levelNum) {
@@ -54,6 +58,7 @@ split
       return false;
     }
     print("Peggle ASL: split");
+    vars.hasFinishedStage = false;
     return true;
   }
   return false;
